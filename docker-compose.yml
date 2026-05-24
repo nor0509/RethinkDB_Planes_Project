@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   rethinkdb:
-    image: rethinkdb:latest
+    build: .
     container_name: rethink-lab
     ports:
       - "8080:8080" 
       - "28015:28015"
     volumes:
-      - ./rethink-data:/data
+      - ./rethink-data:/data:z
