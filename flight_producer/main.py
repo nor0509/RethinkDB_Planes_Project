@@ -17,4 +17,4 @@ while True:
 
         db.upsert_database(flights_cleaned)
 
-    time.sleep(10.5)
+    time.sleep(30)

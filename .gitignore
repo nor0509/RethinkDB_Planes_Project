@@ -220,3 +220,7 @@ __marimo__/
 # Database
 
 rethink-data/
+
+# API Credentials
+
+credentials.json

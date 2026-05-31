@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Radar Lotów na Żywo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([52.0, 19.0], 6);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var markers = {};
+
+        var source = new EventSource('/stream');
+        
+        source.onmessage = function(event) {
+            var flight = JSON.parse(event.data);
+            
+            // Tworzymy opis, który pokaże się po kliknięciu w samolot
+            var popupText = "<b>" + flight.callsign + "</b><br>" +
+                            "Kraj: " + flight.origin_country + "<br>" +
+                            "Prędkość: " + flight.velocity + " m/s";
+
+            if (markers[flight.id]) {
+                markers[flight.id].setLatLng([flight.latitude, flight.longitude]);
+                markers[flight.id].setPopupContent(popupText);
+            } else {
+                markers[flight.id] = L.marker([flight.latitude, flight.longitude])
+                    .addTo(map)
+                    .bindPopup(popupText);
+            }
+        };
+    </script>
+</body>
+</html>

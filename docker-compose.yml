@@ -14,3 +14,13 @@ services:
         - rethinkdb
       environment:
         DB_HOST: rethinkdb
+        PYTHONUNBUFFERED: 1
+  flight_map:
+    build:
+      context: ./flight_map
+    depends_on:
+      - rethinkdb
+    environment:
+      DB_HOST: rethinkdb
+    ports:
+      - "5000:5000"
