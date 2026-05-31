@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from rethinkdb import errors, r
 
@@ -11,57 +12,54 @@ class RethinkDBConnector:
         self.table_name = table_name
         self.conn = None
 
+    def _log(self, message):
+        """Helper method to print formatted log messages with a timestamp and severity level."""
+        ts = datetime.now().strftime("%H:%M:%S")
+        print(f"[{ts}] [INFO] {message}")
+
     def connect(self):
-        """Connects to the database and retries indefinitely in case of failure"""
+        """Handles the persistent database connection attempt, retrying every 5 seconds until successful."""
         while self.conn is None:
-            print("A connection attempt to the database has been initiated")
+            self._log("A connection attempt to the database has been initiated")
             try:
-                print(f"Trying to connect with {self.host}:{self.port} ...")
+                self._log(f"Trying to connect with {self.host}:{self.port} ...")
                 self.conn = r.connect(self.host, self.port, self.db_name)
-                print("Attempt succeded. Connection established")
+                self._log("Attempt succeeded. Connection established")
             except errors.ReqlDriverError:
-                print("Attempt failed. Restarting...")
+                self._log("Attempt failed. Restarting...")
                 time.sleep(5)
 
     def setup_database(self):
-        """Creates the 'self.db_name' database and  'self.table_name' table. In case of them being already in existence does nothing."""
+        """Ensures the required database and table structure exists, creating them if necessary."""
         if not self.conn:
             self.connect()
-
         try:
-            print(f'Trying to create the "{self.db_name}" database...')
+            self._log(f'Trying to create the "{self.db_name}" database...')
             r.db_create(self.db_name).run(self.conn)
-            print(f"Database {self.db_name} created.")
+            self._log(f"Database {self.db_name} created.")
         except r.ReqlOpFailedError:
-            print(f"Database {self.db_name} already exists.")
-            pass
+            self._log(f"Database {self.db_name} already exists.")
 
         try:
-            print(f"Trying to create the {self.table_name} table...")
+            self._log(f"Trying to create the {self.table_name} table...")
             r.db("radar").table_create("flights").run(self.conn)
-            print(f"Table {self.table_name} created.")
+            self._log(f"Table {self.table_name} created.")
         except r.ReqlOpFailedError:
-            print(f"Table {self.table_name} already exists.")
-            pass
+            self._log(f"Table {self.table_name} already exists.")
 
-    def upsert_database(self, json_list: list):
-        """It accepts a raw list and encapsulates the database storage implementation."""
-        if not self.conn:
-            self.connect()
-
-        try:
-            result = (
+    def upsert_database(self, json_list):
+        """Performs a bulk upsert of flight data into the database, with retry logic for handling initialization delays."""
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
                 r.table("flights").insert(json_list, conflict="update").run(self.conn)
-            )
-            print("Database updated.")
-            return result
-        except errors.ReqlDriverError:
-            print("Connection lost during and upsert operation")
-            self.conn = None
-            return None
-
-    def close(self):
-        """Closing the connection"""
-        if self.conn:
-            self.conn.close()
-            print("Closed the connection to the database")
+                self._log("Data inserted successfully")
+                return
+            except errors.ReqlOpFailedError:
+                self._log(
+                    f"Database not ready, retrying... ({attempt + 1}/{max_retries})"
+                )
+                time.sleep(5)
+            except Exception as e:
+                self._log(f"Unexpected error: {e}")
+                break

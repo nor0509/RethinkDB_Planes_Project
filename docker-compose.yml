@@ -8,13 +8,18 @@ services:
     volumes:
       - ./rethink-data:/data:z
   flight_producer:
-      build: 
-        context: ./flight_producer
-      depends_on:
-        - rethinkdb
-      environment:
-        DB_HOST: rethinkdb
-        PYTHONUNBUFFERED: 1
+    build: 
+      context: ./flight_producer
+    user: root
+    depends_on:
+      - rethinkdb
+    environment:
+      DB_HOST: rethinkdb
+      PYTHONUNBUFFERED: 1
+      OPEN_SKY_CLIENT_ID: ${CLIENT_ID}
+      OPEN_SKY_CLIENT_SECRET: ${CLIENT_SECRET}
+    volumes:
+      - ./flight_producer/credentials.json:/app/credentials.json:ro
   flight_map:
     build:
       context: ./flight_map

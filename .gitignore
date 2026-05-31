@@ -224,3 +224,5 @@ rethink-data/
 # API Credentials
 
 credentials.json
+credentials.env
+.env

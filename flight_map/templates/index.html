@@ -6,6 +6,13 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { height: 100vh; width: 100vw; }
+                .plane-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: none !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body>
@@ -27,16 +34,22 @@
         source.onmessage = function(event) {
             var flight = JSON.parse(event.data);
             
-            // Tworzymy opis, który pokaże się po kliknięciu w samolot
+            var airplaneIcon = L.divIcon({
+                html: '<div style="transform: rotate(' + flight.true_track + 'deg); font-size: 20px;">✈️</div>',
+                className: 'plane-icon',
+                iconSize: [20, 20]
+            });
+
             var popupText = "<b>" + flight.callsign + "</b><br>" +
                             "Kraj: " + flight.origin_country + "<br>" +
                             "Prędkość: " + flight.velocity + " m/s";
 
             if (markers[flight.id]) {
                 markers[flight.id].setLatLng([flight.latitude, flight.longitude]);
+                markers[flight.id].setIcon(airplaneIcon); // Aktualizacja ikony
                 markers[flight.id].setPopupContent(popupText);
             } else {
-                markers[flight.id] = L.marker([flight.latitude, flight.longitude])
+                markers[flight.id] = L.marker([flight.latitude, flight.longitude], {icon: airplaneIcon})
                     .addTo(map)
                     .bindPopup(popupText);
             }
