@@ -1,11 +1,12 @@
+import os
 import time
 
 import opensky_api
 from database import RethinkDBConnector
 
-db = RethinkDBConnector(
-    host="localhost", port=28015, db_name="radar", table_name="flights"
-)
+DB_HOST = os.getenv("DB_HOST", "localhost")
+
+db = RethinkDBConnector(host=DB_HOST, port=28015, db_name="radar", table_name="flights")
 db.setup_database()
 
 while True:

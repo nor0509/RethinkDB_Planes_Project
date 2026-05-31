@@ -7,3 +7,10 @@ services:
       - "28015:28015"
     volumes:
       - ./rethink-data:/data:z
+  flight_producer:
+      build: 
+        context: ./flight_producer
+      depends_on:
+        - rethinkdb
+      environment:
+        DB_HOST: rethinkdb
